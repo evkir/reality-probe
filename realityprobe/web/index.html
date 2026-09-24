@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reality Probe v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d1120;--ink2:#141828;--ink3:#1c2235;--ink4:#242b42;
+  --border:rgba(110,231,122,.14);--border2:rgba(110,231,122,.28);
+  --green:#6ee77a;--green2:#a8f5b0;--green-d:#3a9e45;
+  --cream:#e8e2d4;--cream2:#b8b2a4;
+  --amber:#f5c842;--red:#f05a6a;--orange:#f07a42;--purple:#b06af0;
+  --cyan:#42d4f4;--blue:#4285f4;
+  --dim:#4a5270;
+  --mono:'JetBrains Mono',monospace;--display:'Syne',sans-serif;
+  --fs-base:14px;--fs-sm:12px;--fs-xs:11px;--fs-label:10px;
+  --radius:14px;--radius-sm:9px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:var(--fs-base)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--ink2)}
+::-webkit-scrollbar-thumb{background:var(--ink4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--green-d)}
+body{background:var(--ink);color:var(--cream);font-family:var(--display);min-height:100vh;overflow-x:hidden;font-size:var(--fs-base)}
+
+/* ── backgrounds ── */
+.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-glow{position:absolute;border-radius:50%;filter:blur(100px);opacity:.07}
+.bg-glow.g1{width:800px;height:800px;background:radial-gradient(circle,#6ee77a,transparent 70%);top:-300px;left:-200px;animation:dA 22s ease-in-out infinite alternate}
+.bg-glow.g2{width:600px;height:600px;background:radial-gradient(circle,#3a7aff,transparent 70%);bottom:-200px;right:-100px;animation:dB 28s ease-in-out infinite alternate}
+@keyframes dA{from{transform:translate(0,0)}to{transform:translate(80px,60px)}}
+@keyframes dB{from{transform:translate(0,0)}to{transform:translate(-60px,80px)}}
+.dot-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(110,231,122,.055) 1px,transparent 1px);
+  background-size:32px 32px}
+
+.shell{position:relative;z-index:1;max-width:1920px;margin:0 auto;padding:0 28px 80px}
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;padding:22px 0 20px;border-bottom:1px solid var(--border);margin-bottom:24px;animation:slideD .6s cubic-bezier(.16,1,.3,1) both;gap:16px}
+@keyframes slideD{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+.panda-mark{position:relative;width:52px;height:52px;flex-shrink:0}
+.panda-mark svg{width:52px;height:52px}
+.panda-pulse{position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(110,231,122,.28);animation:pp 3s ease-in-out infinite}
+@keyframes pp{0%,100%{transform:scale(1);opacity:.28}50%{transform:scale(1.1);opacity:.7}}
+.brand-name{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,var(--green2),var(--green) 50%,var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.brand-sub{font-family:var(--mono);font-size:11px;font-weight:300;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.v2tag{display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;margin-left:8px}
+.hstats{display:flex;gap:24px;margin-left:auto}
+.hstat{text-align:center;min-width:60px}
+.hstat-val{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--green);line-height:1}
+.hstat-val.amber{color:var(--amber)}.hstat-val.cyan{color:var(--cyan)}
+.hstat-lbl{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:310px 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+/* ── CARD ── */
+.card{background:var(--ink2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .3s}
+.card:hover{border-color:var(--border2)}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;background:linear-gradient(180deg,rgba(110,231,122,.04),transparent)}
+.card-title{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--green2);letter-spacing:2px;text-transform:uppercase}
+.card-body{padding:18px}
+.field-lbl{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:7px}
+textarea,input[type=number],#serverIpScan,#freezePath{width:100%;background:var(--ink3);border:1px solid rgba(110,231,122,.12);border-radius:var(--radius-sm);color:var(--cream);font-family:var(--mono);font-size:12px;font-weight:300;padding:10px 13px;outline:none;resize:vertical;transition:border-color .2s,box-shadow .2s;line-height:1.7}
+textarea:focus,input[type=number]:focus,#serverIpScan:focus,#freezePath:focus{border-color:rgba(110,231,122,.45);box-shadow:0 0 0 3px rgba(110,231,122,.07)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+input[type=range]{-webkit-appearance:none;width:100%;height:5px;background:var(--ink4);border-radius:3px;border:none;padding:0;cursor:pointer;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(110,231,122,.5);cursor:pointer;transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+
+/* ── SCAN BUTTON ── */
+.scan-btn{width:100%;margin-top:18px;padding:15px 22px;border-radius:var(--radius-sm);border:none;cursor:pointer;outline:none;font-family:var(--display);font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--green-d),#2d7d35);color:#fff;box-shadow:0 4px 18px rgba(110,231,122,.25);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px;position:relative;overflow:hidden}
+.scan-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);opacity:0;transition:opacity .2s}
+.scan-btn:hover::before{opacity:1}
+.scan-btn:hover{transform:translateY(-1px);box-shadow:0 7px 24px rgba(110,231,122,.35)}
+.scan-btn:active{transform:scale(.98)}
+.scan-btn.running{background:linear-gradient(135deg,#7a2535,#5a1828);animation:sPulse 2s ease-in-out infinite}
+@keyframes sPulse{0%,100%{box-shadow:0 4px 18px rgba(240,90,106,.3)}50%{box-shadow:0 4px 28px rgba(240,90,106,.55)}}
+.scan-btn.fetching{background:linear-gradient(135deg,#3a5a8a,#2a4a7a);animation:fPulse 1.5s ease-in-out infinite}
+@keyframes fPulse{0%,100%{box-shadow:0 4px 18px rgba(90,150,240,.3)}50%{box-shadow:0 4px 28px rgba(90,150,240,.55)}}
+.scan-btn-icon{font-size:18px}
+.scan-btn.running .scan-btn-icon,.scan-btn.fetching .scan-btn-icon{animation:spin 1.5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── PROGRESS ── */
+.progress-wrap{margin-top:14px;display:none}
+.progress-wrap.vis{display:block}
+.progress-track{height:6px;background:var(--ink4);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,var(--green-d),var(--green),var(--green2));transition:width .5s cubic-bezier(.4,0,.2,1)}
+.progress-info{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.progress-domain{font-family:var(--mono);font-size:11px;color:var(--cream2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── LOG ── */
+.log-term{background:var(--ink);border:1px solid rgba(110,231,122,.08);border-radius:var(--radius-sm);padding:10px 13px;font-family:var(--mono);font-size:11px;font-weight:300;color:var(--dim);line-height:1.9;min-height:80px;max-height:150px;overflow-y:auto;margin-top:12px}
+.ll{animation:llIn .2s ease}
+@keyframes llIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+.ll-ideal{color:var(--cyan);font-weight:500}.ll-ok{color:var(--green)}.ll-warn{color:var(--amber)}
+.ll-err{color:var(--red)}.ll-dim{color:var(--dim)}.ll-done{color:var(--green2);font-weight:500}
+
+/* DPI legend */
+.dpi-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;background:rgba(61,69,96,.12);border-radius:var(--radius-sm);border:1px solid rgba(61,69,96,.25)}
+.dpi-item{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--cream2)}
+
+/* sources */
+#sourcesCard .card-body{padding:14px 18px}
+.src-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid rgba(61,69,96,.2);font-family:var(--mono);font-size:12px}
+.src-row:last-of-type{border-bottom:none}
+.src-dot{font-size:14px}
+.src-name{color:var(--cream2);flex:1;font-size:12px}
+.src-count{font-size:14px;font-weight:500;min-width:35px;text-align:right}
+.src-msg{color:var(--dim);font-size:10px;margin-top:2px}
+
+/* ── TABLE ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;gap:14px}
+.empty-panda{font-size:64px;opacity:.13;animation:float 4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.empty-text{font-family:var(--mono);font-size:13px;color:var(--dim);letter-spacing:1px}
+.empty-hint{font-family:var(--mono);font-size:11px;color:rgba(61,69,96,.7)}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;padding:10px 11px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--ink2);z-index:2}
+tbody tr{border-bottom:1px solid rgba(28,34,53,.8);transition:background .15s;animation:rowR .3s cubic-bezier(.16,1,.3,1) both}
+tbody tr:hover{background:rgba(110,231,122,.035)}
+@keyframes rowR{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+td{padding:9px 11px;vertical-align:middle;font-family:var(--mono);font-size:12px;white-space:nowrap}
+.domain-td{font-weight:500;color:var(--cream);max-width:180px;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.rank-td{font-size:11px;color:var(--dim);width:28px}
+.ip-td{color:var(--dim);font-size:11px}
+.tls-13{color:var(--green)}.tls-12{color:var(--amber)}
+.kex-x{color:var(--green2)}.kex-o{color:var(--cream2)}
+.h2-yes{color:var(--cyan);font-weight:600}.h2-no{color:var(--dim)}
+.cdn-yes{color:var(--blue)}.cdn-no{color:var(--dim)}
+.score-td{width:80px}
+.score-num{font-weight:600;font-size:13px}
+.score-bar{height:3px;background:var(--ink4);border-radius:2px;margin-top:3px}
+.score-bar-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-family:var(--mono);letter-spacing:.5px;font-weight:500;border:1px solid;white-space:nowrap}
+.badge-ideal{color:var(--cyan);border-color:rgba(66,212,244,.4);background:rgba(66,212,244,.09)}
+.badge-excellent{color:var(--green);border-color:rgba(110,231,122,.32);background:rgba(110,231,122,.08)}
+.badge-good{color:var(--amber);border-color:rgba(245,200,66,.32);background:rgba(245,200,66,.08)}
+.badge-poor{color:var(--dim);border-color:rgba(61,69,96,.4);background:transparent}
+.badge-blocked{color:var(--orange);border-color:rgba(240,122,66,.32);background:rgba(240,122,66,.08)}
+.badge-skipped{color:var(--dim);border-color:rgba(61,69,96,.3);background:rgba(61,69,96,.06);text-decoration:line-through;opacity:.6}
+.badge-rst{color:var(--red);border-color:rgba(240,90,106,.32);background:rgba(240,90,106,.08)}
+.badge-timeout,.badge-error{color:var(--red);border-color:rgba(240,90,106,.25);background:rgba(240,90,106,.05)}
+.badge-tampered{color:var(--purple);border-color:rgba(176,106,240,.32);background:rgba(176,106,240,.08)}
+.badge-redirect{color:var(--orange);border-color:rgba(240,122,66,.4);background:rgba(240,122,66,.09)}
+
+.use-btn{padding:4px 12px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:500;background:rgba(110,231,122,.09);border:1px solid rgba(110,231,122,.22);color:var(--green);cursor:pointer;transition:all .15s}
+.use-btn:hover{background:rgba(110,231,122,.17);border-color:rgba(110,231,122,.45)}
+.use-btn.ideal{background:rgba(66,212,244,.09);border-color:rgba(66,212,244,.32);color:var(--cyan)}
+.use-btn.ideal:hover{background:rgba(66,212,244,.17)}
+
+/* ── TOP 3 ── */
+.top3-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 14px 0}
+.top3-card{background:linear-gradient(135deg,rgba(110,231,122,.07),rgba(58,158,69,.03));border:1px solid rgba(110,231,122,.22);border-radius:var(--radius-sm);padding:14px 16px;cursor:pointer;transition:all .2s}
+.top3-card:hover{border-color:rgba(110,231,122,.45);background:rgba(110,231,122,.11)}
+.top3-card.rank1{border-color:rgba(66,212,244,.4);background:linear-gradient(135deg,rgba(66,212,244,.08),rgba(66,212,244,.03))}
+.top3-card.rank1:hover{background:rgba(66,212,244,.14)}
+.top3-card.rank2{border-color:rgba(245,200,66,.38);background:linear-gradient(135deg,rgba(245,200,66,.08),rgba(245,200,66,.03))}
+.top3-rank{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px}
+.top3-domain{font-family:var(--display);font-size:14px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top3-meta{font-family:var(--mono);font-size:10px;color:var(--cream2);margin-top:4px}
+.top3-score{font-family:var(--display);font-size:24px;font-weight:800;float:right;margin-top:-30px}
+.top3-h2tag{display:inline-block;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(66,212,244,.12);border:1px solid rgba(66,212,244,.3);color:var(--cyan);margin-left:5px;vertical-align:middle}
+.top3-score.s-cyan{color:var(--cyan)}.top3-score.s-green{color:var(--green)}.top3-score.s-amber{color:var(--amber)}
+
+/* ── PAGINATION ── */
+.pg-btn{padding:4px 12px;font-family:var(--mono);font-size:11px;background:var(--ink3);border:1px solid var(--border);color:var(--cream2);border-radius:6px;cursor:pointer;transition:all .15s}
+.pg-btn:hover:not(:disabled){border-color:rgba(110,231,122,.3);color:var(--green)}
+.pg-btn:disabled{opacity:.3;cursor:default}
+.pg-num{min-width:28px;padding:4px 8px;font-family:var(--mono);font-size:11px;background:var(--ink3);border:1px solid var(--border);color:var(--dim);border-radius:6px;cursor:pointer;text-align:center;transition:all .15s}
+.pg-num:hover{border-color:rgba(110,231,122,.3);color:var(--green)}
+.pg-num.active{background:rgba(110,231,122,.12);border-color:rgba(110,231,122,.42);color:var(--green)}
+
+/* ── CONFIG PANEL ── */
+.config-sticky{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;width:520px;flex-shrink:0}
+.tabs-nav{display:flex;gap:2px;padding:12px 14px 0;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(110,231,122,.03),transparent);flex-wrap:wrap}
+.tab-pill{padding:7px 12px;border-radius:6px 6px 0 0;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);background:none;border:none;cursor:pointer;transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab-pill:hover{color:var(--cream2);background:rgba(110,231,122,.04)}
+.tab-pill.active{color:var(--green);border-bottom-color:var(--green);background:rgba(110,231,122,.06)}
+.tab-content{display:none;padding:16px}
+.tab-content.active{display:block}
+.code-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.code-lbl{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase}
+.code-block{background:var(--ink);border:1px solid rgba(110,231,122,.09);border-radius:var(--radius-sm);padding:13px 15px;font-family:var(--mono);font-size:11px;font-weight:300;color:var(--cream2);white-space:pre;overflow-x:auto;line-height:1.75;max-height:380px;overflow-y:auto}
+.key-item{display:grid;grid-template-columns:95px 1fr auto;align-items:center;gap:8px;margin-bottom:10px}
+.key-name{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+.key-value{font-family:var(--mono);font-size:11px;color:var(--green2);background:var(--ink3);border:1px solid rgba(110,231,122,.12);border-radius:7px;padding:6px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copy-btn{padding:5px 12px;font-family:var(--mono);font-size:10px;font-weight:500;background:var(--ink3);border:1px solid rgba(110,231,122,.17);color:var(--cream2);border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.copy-btn:hover{border-color:rgba(110,231,122,.38);color:var(--green)}
+.copy-btn.ok{color:var(--green);border-color:rgba(110,231,122,.42)}
+.platform-note{background:rgba(61,69,96,.22);border:1px solid rgba(61,69,96,.45);border-radius:var(--radius-sm);padding:10px 13px;font-family:var(--mono);font-size:11px;color:var(--cream2);line-height:1.75;margin-bottom:12px}
+.platform-note strong{color:var(--green2)}
+.platform-note .dpi-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;margin-left:5px}
+.dpi-ideal{background:rgba(66,212,244,.12);border:1px solid rgba(66,212,244,.35);color:var(--cyan)}
+.dpi-good{background:rgba(110,231,122,.12);border:1px solid rgba(110,231,122,.3);color:var(--green)}
+.dpi-fair{background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);color:var(--amber)}
+.dpi-poor{background:rgba(61,69,96,.2);border:1px solid rgba(61,69,96,.4);color:var(--dim)}
+.server-ip-row{display:flex;gap:9px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:rgba(110,231,122,.02)}
+.server-ip-lbl{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+.server-ip-in{flex:1;background:var(--ink3);border:1px solid rgba(110,231,122,.17);border-radius:var(--radius-sm);color:var(--green2);font-family:var(--mono);font-size:12px;padding:7px 11px;outline:none;transition:border-color .2s}
+.server-ip-in:focus{border-color:rgba(110,231,122,.45)}
+.regen-btn{padding:7px 14px;font-family:var(--mono);font-size:10px;background:rgba(110,231,122,.09);border:1px solid rgba(110,231,122,.22);color:var(--green);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;white-space:nowrap}
+.regen-btn:hover{background:rgba(110,231,122,.17)}
+
+/* ── QUICK SEARCH — fixed z-index and pointer-events ── */
+.quick-wrap{display:flex;gap:10px;align-items:stretch;position:relative;z-index:10}
+.quick-domain{flex:1;min-width:0;height:42px;padding:0 15px;border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px;background:var(--ink3);border:1.5px solid rgba(110,231,122,.2);color:var(--cream);outline:none;transition:border-color .2s,box-shadow .2s;pointer-events:all;position:relative;z-index:10;-webkit-user-select:text;user-select:text}
+.quick-domain:focus{border-color:rgba(110,231,122,.55);box-shadow:0 0 0 3px rgba(110,231,122,.08)}
+.quick-domain::placeholder{color:var(--dim)}
+.quick-port{width:80px;height:42px;padding:0 10px;border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px;background:var(--ink3);border:1.5px solid rgba(110,231,122,.2);color:var(--cream);outline:none;transition:border-color .2s;pointer-events:all;z-index:10}
+.quick-port:focus{border-color:rgba(110,231,122,.55)}
+.quick-btn{height:42px;padding:0 20px;border-radius:var(--radius-sm);font-family:var(--mono);font-size:12px;font-weight:600;background:rgba(110,231,122,.12);border:1.5px solid rgba(110,231,122,.28);color:var(--green);cursor:pointer;white-space:nowrap;transition:all .15s;pointer-events:all;z-index:10}
+.quick-btn:hover:not(:disabled){background:rgba(110,231,122,.2);border-color:rgba(110,231,122,.5)}
+.quick-btn:disabled{opacity:.5;cursor:default}
+#quickResult{display:none;margin-top:12px;padding:12px 15px;background:var(--ink);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--mono);font-size:12px;position:relative;z-index:10}
+
+/* filter bar */
+.filter-bar{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.filter-btn{padding:4px 12px;font-family:var(--mono);font-size:10px;font-weight:500;background:var(--ink3);border:1px solid var(--border);color:var(--dim);border-radius:6px;cursor:pointer;transition:all .15s}
+.filter-btn:hover{border-color:var(--border2);color:var(--cream2)}
+.filter-btn.active{background:rgba(110,231,122,.1);border-color:rgba(110,231,122,.38);color:var(--green)}
+.filter-btn.active.cyan{background:rgba(66,212,244,.1);border-color:rgba(66,212,244,.38);color:var(--cyan)}
+
+/* toast */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--ink3);border:1px solid rgba(110,231,122,.32);color:var(--green2);font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:var(--radius-sm);box-shadow:0 8px 28px rgba(0,0,0,.4);opacity:0;transform:translateY(10px) scale(.96);transition:all .3s cubic-bezier(.16,1,.3,1);pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0) scale(1)}
+
+.anim-in{animation:fadeIn .5s cubic-bezier(.16,1,.3,1) both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.a1{animation-delay:.05s}.a2{animation-delay:.12s}.a3{animation-delay:.2s}
+.sel-in{width:100%;height:36px;background:var(--ink3);border:1px solid var(--border);color:var(--cream2);
+  font-family:var(--mono);font-size:12px;border-radius:8px;padding:0 8px;outline:none}
+.server-info{margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(66,212,244,.06);
+  border:1px solid rgba(66,212,244,.2);font-family:var(--mono);font-size:11px;color:var(--cream2);line-height:1.5}
+.server-info .warn{color:var(--amber)}
+.sub-btn{flex:1;height:38px;border-radius:var(--radius-sm);font-family:var(--mono);font-size:12px;font-weight:600;
+  background:rgba(66,212,244,.10);border:1px solid rgba(66,212,244,.35);color:var(--cyan);cursor:pointer}
+.sub-btn:disabled{opacity:.5;cursor:default}
+.risk-low{color:var(--green)}.risk-medium{color:var(--amber)}.risk-high{color:var(--red)}
+.topo-same_prefix{color:var(--cyan);font-weight:700}.topo-same_asn{color:var(--green)}
+.topo-foreign{color:var(--orange)}.topo-unknown{color:var(--dim)}
+.pq{color:var(--cyan);font-size:9px;font-weight:700;margin-left:3px}
+</style>
+</head>
+<body>
+<div class="bg-layer"><div class="bg-glow g1"></div><div class="bg-glow g2"></div></div>
+<div class="dot-grid"></div>
+<div class="shell">
+
+<!-- HEADER -->
+<header>
+  <div class="panda-mark">
+    <div class="panda-pulse"></div>
+    <svg viewBox="0 0 52 52" fill="none">
+      <circle cx="26" cy="30" r="17" fill="#e8e2d4" opacity=".95"/>
+      <circle cx="10" cy="12" r="7" fill="#1c2235"/><circle cx="42" cy="12" r="7" fill="#1c2235"/>
+      <circle cx="26" cy="20" r="14" fill="#e8e2d4" opacity=".95"/>
+      <ellipse cx="19.5" cy="18" rx="5" ry="5.5" fill="#1c2235"/><ellipse cx="32.5" cy="18" rx="5" ry="5.5" fill="#1c2235"/>
+      <circle cx="19.5" cy="18.5" r="2.5" fill="#6ee77a"/><circle cx="32.5" cy="18.5" r="2.5" fill="#6ee77a"/>
+      <circle cx="20" cy="18.5" r="1.2" fill="#0d1120"/><circle cx="33" cy="18.5" r="1.2" fill="#0d1120"/>
+      <ellipse cx="26" cy="23.5" rx="2.5" ry="1.5" fill="#b8b2a4"/>
+      <path d="M22 26 Q26 29 30 26" stroke="#b8b2a4" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <ellipse cx="26" cy="34" rx="7" ry="6" fill="#d8d0c0" opacity=".5"/>
+    </svg>
+  </div>
+  <div>
+    <div class="brand-name">Reality Probe<span class="v2tag">v4</span></div>
+    <div class="brand-sub">VLESS Reality · ТСПУ 2026 · SNI↔ASN · X25519MLKEM768 · тест заморозки</div>
+  </div>
+  <div class="hstats">
+    <div class="hstat"><div class="hstat-val" id="statTotal">—</div><div class="hstat-lbl">scanned</div></div>
+    <div class="hstat"><div class="hstat-val cyan" id="statIdeal">—</div><div class="hstat-lbl">ideal</div></div>
+    <div class="hstat"><div class="hstat-val" id="statGood">—</div><div class="hstat-lbl">suitable</div></div>
+    <div class="hstat"><div class="hstat-val amber" id="statTime">—</div><div class="hstat-lbl">seconds</div></div>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<div style="display:flex;flex-direction:column;gap:14px">
+
+  <div class="card anim-in a1">
+    <div class="card-head"><span>🎯</span><span class="card-title">Scan</span></div>
+    <div class="card-body">
+      <label class="field-lbl">Domains — one per line</label>
+      <textarea id="domainsTa" style="min-height:180px" placeholder="loading..."></textarea>
+      <div class="field-row">
+        <div><label class="field-lbl">Port</label><input type="number" id="portIn" value="443" min="1" max="65535"></div>
+        <div><label class="field-lbl">Threads — <span id="concVal" style="color:var(--green)">15</span></label>
+          <div style="margin-top:11px"><input type="range" id="concSlider" min="1" max="40" value="15"></div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div><label class="field-lbl" title="IP VPS с Reality: нужен для оценки SNI↔IP/ASN">IP сервера (VPS)</label>
+          <input type="text" id="serverIpScan" placeholder="95.216.x.x" autocomplete="off" spellcheck="false"></div>
+        <div><label class="field-lbl">Профиль</label>
+          <select id="profileSel" onchange="profileChanged()" class="sel-in">
+            <option value="standard">Стандарт</option>
+            <option value="whitelist">Белые списки РФ</option>
+          </select></div>
+      </div>
+      <div id="serverInfo" class="server-info" style="display:none"></div>
+      <button class="scan-btn" id="scanBtn" onclick="startProbe()">
+        <span class="scan-btn-icon" id="btnIcon">🐼</span>
+        <span id="btnLabel">Сканировать список</span>
+      </button>
+      <div class="field-row" style="margin-top:8px;align-items:end">
+        <button class="sub-btn" id="subnetBtn" onclick="startSubnet()"
+          title="Найти доноров в подсети VPS — лучший вариант против проверки SNI↔IP">🧭 Соседи по подсети</button>
+        <select id="prefixSel" class="sel-in" title="Размер подсети">
+          <option value="24" selected>/24</option><option value="23">/23</option><option value="22">/22</option>
+        </select>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-info"><span id="progressNums">0/0</span><span id="progressPct">0%</span></div>
+        <div class="progress-domain" id="progressDomain"></div>
+      </div>
+      <div class="log-term" id="logTerm"><div class="ll ll-dim">// waiting...</div></div>
+      <div class="dpi-legend">
+        <div class="dpi-item"><span style="color:var(--cyan)">✦</span><span>IDEAL: подсеть/ASN VPS + TLS1.3 + H2</span></div>
+        <div class="dpi-item"><span style="color:var(--green)">✓</span><span>пригоден</span></div>
+        <div class="dpi-item"><span style="color:var(--red)">⊘</span><span>недоступен/RST</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card anim-in a2" id="sourcesCard">
+    <div class="card-head">
+      <span>🌐</span><span class="card-title">Domain Sources</span>
+      <button onclick="refreshDomains()" id="refreshBtn"
+        style="margin-left:auto;padding:5px 13px;font-family:var(--mono);font-size:11px;
+               background:rgba(110,231,122,.09);border:1px solid rgba(110,231,122,.22);
+               color:var(--green);border-radius:7px;cursor:pointer;transition:all .15s">
+        ⟳ Refresh
+      </button>
+    </div>
+    <div class="card-body" style="padding:12px 18px">
+      <div id="fetchStatus" style="display:none;padding:9px 12px;border-radius:8px;margin-bottom:12px;
+           background:rgba(90,150,240,.08);border:1px solid rgba(90,150,240,.2);
+           font-family:var(--mono);font-size:11px;color:#7ab4f5">
+        ⟳ Refreshing domain database...
+      </div>
+      <div id="sourcesList"></div>
+      <div style="margin-top:14px;padding:12px 0 0;border-top:1px solid var(--border);
+           display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Total domains</span>
+        <span id="domainTotal" style="color:var(--green);font-size:20px;font-weight:700;font-family:var(--mono)">—</span>
+      </div>
+      <div id="lastUpdate" style="margin-top:5px;font-family:var(--mono);font-size:10px;color:var(--dim)"></div>
+    </div>
+  </div>
+
+</div><!-- /sidebar -->
+
+<!-- ── MAIN RIGHT ── -->
+<div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+
+  <!-- QUICK SEARCH -->
+  <div class="card anim-in a2" style="position:relative;z-index:10">
+    <div class="card-head"><span>🔍</span><span class="card-title">Quick Domain Probe</span></div>
+    <div class="card-body" style="padding:14px 18px;position:relative;z-index:10">
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;position:relative;z-index:10">
+        <div style="flex:1;min-width:240px;position:relative;z-index:10">
+          <label style="display:block;font-family:var(--mono);font-size:10px;color:var(--green);
+                        letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">
+            🌐 Domain
+          </label>
+          <input type="text" id="quickInput"
+            placeholder="donor.example.com"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();quickSearch()}"
+            style="width:100%;height:44px;padding:0 15px;border-radius:var(--radius-sm);
+                   font-family:var(--mono);font-size:14px;font-weight:400;
+                   background:var(--ink3);border:2px solid rgba(110,231,122,.35);
+                   color:var(--cream);outline:none;box-sizing:border-box;
+                   transition:border-color .2s,box-shadow .2s;
+                   position:relative;z-index:10;-webkit-user-select:text;user-select:text">
+        </div>
+        <div style="position:relative;z-index:10">
+          <label style="display:block;font-family:var(--mono);font-size:10px;color:var(--dim);
+                        letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">Port</label>
+          <input type="number" id="quickPort" value="443" min="1" max="65535"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();quickSearch()}"
+            style="width:80px;height:44px;padding:0 10px;border-radius:var(--radius-sm);
+                   font-family:var(--mono);font-size:14px;
+                   background:var(--ink3);border:2px solid rgba(110,231,122,.18);
+                   color:var(--cream);outline:none;transition:border-color .2s;
+                   position:relative;z-index:10">
+        </div>
+        <button id="quickBtn" onclick="quickSearch()"
+          style="height:44px;padding:0 22px;border-radius:var(--radius-sm);
+                 font-family:var(--mono);font-size:13px;font-weight:600;
+                 background:rgba(110,231,122,.15);border:2px solid rgba(110,231,122,.4);
+                 color:var(--green);cursor:pointer;white-space:nowrap;
+                 transition:all .15s;position:relative;z-index:10;align-self:flex-end">
+          Probe →
+        </button>
+        <button id="freezeBtn" onclick="freezeTest()" title="Запускать из сети РФ: качает страницу донора через IP VPS и ищет заморозку 15–20 КБ"
+          style="height:44px;padding:0 16px;border-radius:var(--radius-sm);font-family:var(--mono);font-size:12px;font-weight:600;
+                 background:rgba(66,212,244,.10);border:2px solid rgba(66,212,244,.35);color:var(--cyan);cursor:pointer;white-space:nowrap;align-self:flex-end">
+          ❄ Тест заморозки
+        </button>
+      </div>
+      <div style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--dim)">
+        Тест заморозки идёт на IP из поля «IP сервера» (пусто — на IP донора, как контроль). Путь:
+        <input type="text" id="freezePath" value="/" style="width:180px;padding:3px 8px;margin-left:4px;display:inline-block;resize:none">
+      </div>
+      <div id="quickResult" style="display:none;margin-top:12px;padding:12px 15px;
+           background:var(--ink);border:1px solid var(--border);border-radius:var(--radius-sm);
+           font-family:var(--mono);font-size:12px;position:relative;z-index:10"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS + CONFIG ROW -->
+  <div style="display:flex;gap:14px;align-items:start;min-width:0">
+
+    <!-- RESULTS TABLE -->
+    <div style="flex:1;min-width:0">
+    <div class="card anim-in a3" style="min-height:440px">
+      <div class="card-head" style="flex-wrap:wrap;gap:8px">
+        <span>📡</span><span class="card-title">Results</span>
+        <span id="resultBadge" style="font-family:var(--mono);font-size:11px;color:var(--dim)"></span>
+        <div id="paginationTop" style="display:none;margin-left:auto;align-items:center;gap:8px">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">Per page:</span>
+          <select id="perPageSel" onchange="setPerPage(this.value)"
+            style="background:var(--ink3);border:1px solid var(--border);color:var(--cream2);
+                   font-family:var(--mono);font-size:11px;border-radius:6px;padding:4px 8px;cursor:pointer;outline:none">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="9999">All</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-bar" id="filterBar" style="display:none">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Filter:</span>
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn cyan" onclick="setFilter('ideal',this)">✦ Ideal</button>
+        <button class="filter-btn" onclick="setFilter('topo',this)">🧭 Подсеть/ASN</button>
+        <button class="filter-btn" onclick="setFilter('lowrisk',this)">🟢 Низкий риск</button>
+        <button class="filter-btn" onclick="setFilter('suitable',this)">✓ Suitable</button>
+        <button class="filter-btn" onclick="setFilter('blocked',this)">⊘ Blocked</button>
+        <button class="filter-btn" onclick="setFilter('bad',this)">✕ Errors</button>
+        <div style="display:flex;gap:6px;margin-left:auto">
+          <button onclick="exportData('csv')" class="filter-btn" title="Download CSV">📊 CSV</button>
+          <button onclick="exportData('json')" class="filter-btn" title="Download JSON">📋 JSON</button>
+          <button onclick="exportData('zip')" class="filter-btn" title="Full export">📦 ZIP</button>
+        </div>
+      </div>
+
+      <!-- TOP 3 -->
+      <div id="top3Wrap" style="display:none">
+        <div class="top3-grid" id="top3Grid"></div>
+        <div style="height:12px"></div>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <div class="empty-panda">🐼</div>
+        <div class="empty-text">Start a scan</div>
+        <div class="empty-hint">// Укажите IP VPS и нажмите «Соседи по подсети» — лучший донор 2026 живёт рядом с сервером</div>
+      </div>
+
+      <div class="table-scroll" id="tableWrap" style="display:none">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Domain</th><th title="IP донора и его ASN">IP / ASN</th><th>TLS</th>
+            <th title="Группа на браузерный ClientHello; PQ = поддержка X25519MLKEM768">KEX</th>
+            <th title="HTTP/2 via ALPN">H2</th>
+            <th title="Топология относительно VPS: подсеть / ASN / чужой">TOPO</th>
+            <th title="Редирект: ↪ внутри сайта, ⚠ на другой хост">REDIR</th>
+            <th>RTT</th><th>Score</th>
+            <th title="Риск для ТСПУ (наведите на значение — причины)">RISK</th>
+            <th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+
+      <div id="paginationBottom" style="display:none;padding:12px 14px;border-top:1px solid var(--border);
+           align-items:center;justify-content:space-between;gap:9px">
+        <span id="pageInfo" style="font-family:var(--mono);font-size:11px;color:var(--dim)"></span>
+        <div style="display:flex;gap:5px;align-items:center">
+          <button onclick="goPage(-1)" class="pg-btn" id="pgPrev">← Prev</button>
+          <div id="pgNumbers" style="display:flex;gap:3px"></div>
+          <button onclick="goPage(1)" class="pg-btn" id="pgNext">Next →</button>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- CONFIG PANEL -->
+    <div id="configSection" style="display:none" class="config-sticky">
+    <div class="card">
+      <div class="server-ip-row">
+        <span class="server-ip-lbl">Server IP</span>
+        <input class="server-ip-in" type="text" id="serverIpIn" placeholder="1.2.3.4">
+        <button class="regen-btn" onclick="regenConfig()">⟳ Regenerate</button>
+      </div>
+      <div class="server-ip-row">
+        <span class="server-ip-lbl">Transport</span>
+        <select id="transportSel" class="sel-in" onchange="regenConfig()">
+          <option value="tcp">TCP + Vision</option>
+          <option value="xhttp">XHTTP (запасной)</option>
+        </select>
+        <span class="server-ip-lbl">FP</span>
+        <select id="fpSel" class="sel-in" onchange="regenConfig()">
+          <option value="firefox" selected>firefox</option><option value="safari">safari</option>
+          <option value="qq">qq</option><option value="edge">edge</option>
+          <option value="chrome">chrome (риск)</option><option value="randomized">randomized</option>
+        </select>
+      </div>
+
+      <div class="card-head" style="border-top:none">
+        <span>⚙️</span>
+        <span class="card-title">Configuration</span>
+        <span id="configDomainLabel" style="font-family:var(--mono);font-size:11px;color:var(--green2);margin-left:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px"></span>
+        <span id="configDpiTag" style="margin-left:5px"></span>
+        <button onclick="document.getElementById('configSection').style.display='none'"
+          style="margin-left:auto;background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;transition:color .15s"
+          onmouseover="this.style.color='var(--cream)'" onmouseout="this.style.color='var(--dim)'">✕</button>
+      </div>
+
+      <div style="padding:10px 14px 0;border-bottom:1px solid var(--border)">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px">Core / Client</div>
+        <div class="tabs-nav" style="padding:0;border:none;background:none;flex-wrap:wrap;gap:5px;margin-bottom:9px">
+          <button class="tab-pill active" onclick="switchTab('xray-in',this)">⚙ xray server</button>
+          <button class="tab-pill" onclick="switchTab('xray-out',this)">🖥 xray client</button>
+          <button class="tab-pill" onclick="switchTab('sb-in',this)">⚙ sb server</button>
+          <button class="tab-pill" onclick="switchTab('sb-out',this)">📱 sb client</button>
+          <button class="tab-pill" onclick="switchTab('mihomo',this)">🌊 mihomo</button>
+          <button class="tab-pill" onclick="switchTab('nekoray',this)">🦊 nekobox</button>
+          <button class="tab-pill" onclick="switchTab('uri',this)">🔗 share link</button>
+          <button class="tab-pill" onclick="switchTab('keys',this)">🔑 Keys</button>
+        </div>
+      </div>
+
+      <div class="tab-content active" id="tab-xray-in">
+        <div class="platform-note"><strong>Server cores:</strong> 3x-ui, Marzban, X-UI, any xray-core panels</div>
+        <div class="code-hdr"><span class="code-lbl">xray inbound (server)</span><button class="copy-btn" onclick="copyEl('xrayInCode',this)">Copy</button></div>
+        <div class="code-block" id="xrayInCode"></div>
+      </div>
+      <div class="tab-content" id="tab-xray-out">
+        <div class="platform-note"><strong>Clients:</strong> v2rayN (Windows), NekoBox (Win/Linux), Furious</div>
+        <div class="code-hdr"><span class="code-lbl">xray outbound (client)</span><button class="copy-btn" onclick="copyEl('xrayOutCode',this)">Copy</button></div>
+        <div class="code-block" id="xrayOutCode"></div>
+      </div>
+      <div class="tab-content" id="tab-sb-in">
+        <div class="platform-note"><strong>Server cores:</strong> Hiddify Panel, sing-box server</div>
+        <div class="code-hdr"><span class="code-lbl">sing-box inbound (server)</span><button class="copy-btn" onclick="copyEl('sbInCode',this)">Copy</button></div>
+        <div class="code-block" id="sbInCode"></div>
+      </div>
+      <div class="tab-content" id="tab-sb-out">
+        <div class="platform-note"><strong>Clients:</strong> Hiddify (iOS/Android/Win/Mac), NekoBox, SFM</div>
+        <div class="code-hdr"><span class="code-lbl">sing-box outbound (client)</span><button class="copy-btn" onclick="copyEl('sbOutCode',this)">Copy</button></div>
+        <div class="code-block" id="sbOutCode"></div>
+      </div>
+      <div class="tab-content" id="tab-mihomo">
+        <div class="platform-note"><strong>Clients:</strong> Mihomo, Clash Meta, Clash Verge, ClashX Pro, FlClash, Stash</div>
+        <div class="code-hdr"><span class="code-lbl">clash-meta YAML</span><button class="copy-btn" onclick="copyEl('mihomoCode',this)">Copy</button></div>
+        <div class="code-block" id="mihomoCode"></div>
+      </div>
+      <div class="tab-content" id="tab-nekoray">
+        <div class="platform-note"><strong>Clients:</strong> NekoBox (Android), Throne (ex-NekoRay)</div>
+        <div class="code-hdr"><span class="code-lbl">nekoray / nekobox JSON</span><button class="copy-btn" onclick="copyEl('nekorayCode',this)">Copy</button></div>
+        <div class="code-block" id="nekorayCode"></div>
+      </div>
+      <div class="tab-content" id="tab-uri">
+        <div class="platform-note"><strong>Universal vless:// link</strong><br>v2rayNG, v2rayN, Happ, v2RayTun, Streisand, Shadowrocket</div>
+        <div class="code-hdr"><span class="code-lbl">vless:// share URI</span><button class="copy-btn" onclick="copyEl('uriCode',this)">Copy</button></div>
+        <div class="code-block" id="uriCode" style="word-break:break-all;white-space:pre-wrap"></div>
+      </div>
+      <div class="tab-content" id="tab-keys">
+        <div class="platform-note" id="panelNote" style="margin-bottom:13px;font-size:10px;white-space:pre-wrap"></div>
+        <div id="keyGrid" style="display:flex;flex-direction:column;gap:9px"></div>
+      </div>
+    </div>
+    </div><!-- /config -->
+
+  </div><!-- /results+config row -->
+</div><!-- /main right -->
+</div><!-- /layout -->
+</div><!-- /shell -->
+<div class="toast" id="toast"></div>
+
+<script>
+let polling=null,lastLen=0,allResults=[],filteredResults=[],currentPage=1,perPage=50;
+let domainPollTimer=null,quickProbing=false,domainsLoadedFresh=false;
+let lastConfigDomain=null,lastConfigPort=443;
+let currentFilter='all';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const RISK_LBL={low:'НИЗКИЙ',medium:'СРЕДНИЙ',high:'ВЫСОКИЙ'};
+const TOPO_LBL={same_prefix:'подсеть',same_asn:'ASN',foreign:'чужой',unknown:'—'};
+function serverIp(){return document.getElementById('serverIpScan').value.trim();}
+function profile(){return document.getElementById('profileSel').value;}
+function useBtn(r,extra=''){
+  if(!r.suitable)return'';
+  const ideal=r.status==='ideal';
+  return`<button class="use-btn${ideal?' ideal':''}" ${extra} data-d="${esc(r.domain)}" data-p="${Number(r.port)||443}"
+    onclick="genConfig(this.dataset.d,+this.dataset.p)">${ideal?'✦ USE':'USE ↗'}</button>`;
+}
+function renderServer(sv){
+  const el=document.getElementById('serverInfo');
+  if(!sv||!sv.ip){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML=`VPS <b>${esc(sv.ip)}</b> · ${sv.asn?'AS'+esc(sv.asn)+' '+esc(sv.holder):'ASN не определён'}`
+    +`${sv.prefix?' · '+esc(sv.prefix):''}`
+    +`${sv.datacenter?`<br><span class="warn">⚠ ${esc(sv.datacenter)}: DC-ASN из группы риска заморозки — сделайте ❄ тест из РФ</span>`:''}`;
+}
+async function profileChanged(){
+  const d=await(await fetch('/api/defaults?profile='+profile())).json();
+  document.getElementById('domainsTa').value=d.domains;
+  toast(profile()==='whitelist'?'Загружены домены из белого списка РФ':'Загружен стандартный список');
+}
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  document.getElementById('concSlider').addEventListener('input',e=>{
+    document.getElementById('concVal').textContent=e.target.value;
+  });
+  // Ensure input is functional
+  const qi=document.getElementById('quickInput');
+  qi.addEventListener('click',()=>qi.focus());
+  await loadDomains();
+  pollDomainStatus();
+});
+
+async function loadDomains(){
+  const d=await(await fetch('/api/defaults')).json();
+  document.getElementById('domainsTa').value=d.domains;
+}
+
+async function pollDomainStatus(){
+  try{
+    const d=await(await fetch('/api/domain-status')).json();
+    renderSources(d);
+    if(!d.fetching&&profile()==='standard'&&!domainsLoadedFresh){domainsLoadedFresh=!!d.last_update;const dd=await(await fetch('/api/defaults')).json();document.getElementById('domainsTa').value=dd.domains;}
+    domainPollTimer=setTimeout(pollDomainStatus,d.fetching?1200:8000);
+  }catch(e){domainPollTimer=setTimeout(pollDomainStatus,5000);}
+}
+
+function renderSources(d){
+  document.getElementById('domainTotal').textContent=d.total||'—';
+  document.getElementById('fetchStatus').style.display=d.fetching?'block':'none';
+  const defs=[
+    {key:'builtin',icon:'📦',label:'Built-in (без затёртых SNI)',note:'offline'},
+    {key:'github', icon:'🐙',label:'jsDelivr → v2fly/XTLS',note:'CDN'},
+    {key:'radar',  icon:'📡',label:'Cloudflare Radar top-500',note:'CDN'},
+    {key:'tranco', icon:'🏆',label:'Majestic Million CDN',note:'direct'},
+    {key:'crtsh',  icon:'🔏',label:'Certspotter / crt.sh',note:'fallback'},
+  ];
+  document.getElementById('sourcesList').innerHTML=defs.map(s=>{
+    const src=(d.sources||{})[s.key]||{};
+    const ok=src.ok;
+    const dotColor=ok===true?'var(--green)':ok===false?'var(--red)':'var(--dim)';
+    const isWarn=src.msg&&src.msg.includes('⚠');
+    const cnt=src.count>0?`<span class="src-count" style="color:var(--green)">${src.count}</span>`
+                         :`<span class="src-count" style="color:var(--dim)">—</span>`;
+    const msgColor=isWarn?'var(--amber)':'var(--dim)';
+    const msg=src.msg
+      ?`<div class="src-msg" style="color:${msgColor}">${esc(src.msg)}</div>`
+      :`<div class="src-msg" style="color:var(--dim);font-style:italic">${s.note}</div>`;
+    return`<div class="src-row"><span class="src-dot" style="color:${dotColor}">${ok!=null?'●':'○'}</span>
+      <div style="flex:1"><div class="src-name">${s.icon} ${s.label}</div>${msg}</div>${cnt}</div>`;
+  }).join('');
+  const rb=document.getElementById('refreshBtn');
+  rb.textContent=d.fetching?'⟳ ...':'⟳ Refresh';
+  rb.disabled=!!d.fetching;
+  if(d.last_update){
+    const dt=new Date(d.last_update);
+    document.getElementById('lastUpdate').textContent=`Updated: ${dt.toLocaleTimeString('en-US')}`;
+  }
+}
+
+async function refreshDomains(){
+  await fetch('/api/refresh-domains',{method:'POST'});
+  clearTimeout(domainPollTimer);pollDomainStatus();
+}
+
+function setFilter(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  currentPage=1;applyFilter();renderTable();
+}
+function applyFilter(){
+  if(currentFilter==='all')          filteredResults=[...allResults];
+  else if(currentFilter==='ideal')   filteredResults=allResults.filter(r=>r.status==='ideal');
+  else if(currentFilter==='suitable')filteredResults=allResults.filter(r=>r.suitable);
+  else if(currentFilter==='topo')    filteredResults=allResults.filter(r=>r.topology==='same_prefix'||r.topology==='same_asn');
+  else if(currentFilter==='lowrisk') filteredResults=allResults.filter(r=>r.tspu_risk==='low'&&r.suitable);
+  else if(currentFilter==='blocked') filteredResults=allResults.filter(r=>r.status==='blocked'||r.status==='rst'||r.status==='tampered'||r.status==='skipped'||r.status==='redirect');
+  else if(currentFilter==='bad')     filteredResults=allResults.filter(r=>r.status==='timeout'||r.status==='error'||r.status==='poor');
+  else filteredResults=[...allResults];
+}
+
+async function startProbe(){
+  const btn=document.getElementById('scanBtn');
+  if(btn.classList.contains('running')){
+    await fetch('/api/stop',{method:'POST'});
+    document.getElementById('btnLabel').textContent='Stopping...';
+    document.getElementById('btnIcon').textContent='⏳';
+    // Force-reset UI if still stuck after 8s
+    setTimeout(()=>{
+      if(btn.classList.contains('running')){
+        setRunning(false);
+        document.getElementById('progressDomain').textContent='⏹ Force-stopped';
+        toast('⏹ Scan force-stopped');
+        clearInterval(polling);
+        // Fetch final results
+        fetch('/api/status').then(r=>r.json()).then(d=>{
+          if(d.results.length){allResults=d.results;applyFilter();renderTable();}
+        }).catch(()=>{});
+      }
+    },8000);
+    return;
+  }
+  const domains=document.getElementById('domainsTa').value.trim();
+  const port=parseInt(document.getElementById('portIn').value)||443;
+  const conc=parseInt(document.getElementById('concSlider').value)||15;
+  if(!domains){toast('Enter domains');return;}
+
+  const status=await(await fetch('/api/domain-status')).json();
+  if(profile()==='standard'&&(status.fetching||!status.last_update)){
+    btn.classList.add('fetching');
+    document.getElementById('btnIcon').textContent='⟳';
+    document.getElementById('btnLabel').textContent='Updating sources...';
+    document.getElementById('progressWrap').classList.add('vis');
+    document.getElementById('progressDomain').textContent='⟳ Loading domains...';
+    if(!status.fetching)await fetch('/api/refresh-domains',{method:'POST'});
+    for(let i=0;i<35;i++){
+      await new Promise(r=>setTimeout(r,1000));
+      const s2=await(await fetch('/api/domain-status')).json();
+      renderSources(s2);
+      if(!s2.fetching){const dd=await(await fetch('/api/defaults')).json();document.getElementById('domainsTa').value=dd.domains;break;}
+    }
+    btn.classList.remove('fetching');
+  }
+
+  allResults=[];filteredResults=[];currentPage=1;lastLen=0;currentFilter='all';
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.filter-btn')?.classList.add('active');
+  ['resultsBody'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  document.getElementById('tableWrap').style.display='none';
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('configSection').style.display='none';
+  document.getElementById('top3Wrap').style.display='none';
+  document.getElementById('paginationBottom').style.display='none';
+  document.getElementById('paginationTop').style.display='none';
+  document.getElementById('filterBar').style.display='none';
+  document.getElementById('logTerm').innerHTML='<div class="ll ll-dim">// initializing...</div>';
+  ['statTotal','statGood','statIdeal','statTime'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('resultBadge').textContent='';
+
+  const freshDomains=document.getElementById('domainsTa').value.trim();
+  const res=await fetch('/api/probe',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({domains:freshDomains,port,concurrency:conc,server_ip:serverIp(),profile:profile()})});
+  if(!res.ok){const e=await res.json();toast(e.error||'Error');return;}
+  setRunning(true);polling=setInterval(poll,600);
+}
+
+function resetResultsUi(){
+  allResults=[];filteredResults=[];currentPage=1;lastLen=0;currentFilter='all';
+  document.getElementById('resultsBody').innerHTML='';
+  document.getElementById('tableWrap').style.display='none';
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('top3Wrap').style.display='none';
+  document.getElementById('filterBar').style.display='none';
+  document.getElementById('logTerm').innerHTML='<div class="ll ll-dim">// initializing...</div>';
+}
+
+async function startSubnet(){
+  const ip=serverIp();
+  if(!ip){toast('Укажите IP сервера (VPS)');document.getElementById('serverIpScan').focus();return;}
+  if(document.getElementById('scanBtn').classList.contains('running')){toast('Скан уже идёт');return;}
+  resetResultsUi();
+  const res=await fetch('/api/subnet',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({server_ip:ip,port:parseInt(document.getElementById('portIn').value)||443,
+      prefix:parseInt(document.getElementById('prefixSel').value)||24,
+      concurrency:parseInt(document.getElementById('concSlider').value)||15,profile:profile()})});
+  if(!res.ok){const e=await res.json();toast(e.error||'Error');return;}
+  setRunning(true);polling=setInterval(poll,700);
+}
+
+function setRunning(v){
+  const btn=document.getElementById('scanBtn');
+  document.getElementById('progressWrap').classList.toggle('vis',v);
+  document.getElementById('subnetBtn').disabled=v;
+  if(v){btn.classList.add('running');document.getElementById('btnIcon').textContent='⏹';document.getElementById('btnLabel').textContent='Stop';}
+  else{btn.classList.remove('running');document.getElementById('btnIcon').textContent='🐼';document.getElementById('btnLabel').textContent='Сканировать список';}
+}
+
+async function poll(){
+  try{
+    const d=await(await fetch('/api/status')).json();
+    const pct=d.total?Math.round(d.progress/d.total*100):0;
+    document.getElementById('progressFill').style.width=pct+'%';
+    document.getElementById('progressNums').textContent=`${d.progress}/${d.total}`;
+    document.getElementById('progressPct').textContent=pct+'%';
+    if(d.current)document.getElementById('progressDomain').textContent='→ '+d.current;
+    renderServer(d.server);
+    if(d.elapsed)document.getElementById('statTime').textContent=d.elapsed;
+    updateLog(d.log);
+    if(d.results.length>lastLen){allResults=d.results;applyFilter();renderTable();lastLen=d.results.length;}
+    if(!d.running){
+      clearInterval(polling);setRunning(false);
+      if(d.results.length){
+        allResults=d.results;applyFilter();renderTable();
+        document.getElementById('filterBar').style.display='flex';
+        const good=d.results.filter(r=>r.suitable).length;
+        const ideal=d.results.filter(r=>r.status==='ideal').length;
+        document.getElementById('statTotal').textContent=d.total;
+        document.getElementById('statGood').textContent=good;
+        document.getElementById('statIdeal').textContent=ideal;
+        document.getElementById('statTime').textContent=d.elapsed;
+        renderTop3(d.results);
+        const best=d.results.find(r=>r.status==='ideal')||d.results.find(r=>r.suitable);
+        if(best)genConfig(best.domain,best.port);
+        toast(`🐼 ${d.elapsed}s — ${ideal} ideal, ${good} suitable`);
+      }
+      document.getElementById('progressDomain').textContent='✓ Done';
+    }
+  }catch(e){
+    console.warn('Poll error:',e);
+    // Don't clear polling on transient errors — retry next tick
+  }
+}
+
+function renderTop3(results){
+  const suitable=results.filter(r=>r.suitable).slice(0,3);
+  if(!suitable.length)return;
+  document.getElementById('top3Wrap').style.display='block';
+  const medals=['🥇','🥈','🥉'];
+  const rankClass=['rank1','rank2','rank3'];
+  document.getElementById('top3Grid').innerHTML=suitable.map((r,i)=>{
+    const sc=r.score;
+    const scc=r.status==='ideal'?'s-cyan':sc>=70?'s-green':'s-amber';
+    const h2tag=r.h2_supported?'<span class="top3-h2tag">H2</span>':'';
+    return`<div class="top3-card ${rankClass[i]}" data-d="${esc(r.domain)}" data-p="${Number(r.port)||443}" onclick="genConfig(this.dataset.d,+this.dataset.p)" title="${esc((r.notes||[]).join('\n'))}">
+      <div class="top3-rank">${medals[i]} #${i+1}${r.status==='ideal'?' ✦ IDEAL':''}</div>
+      <div class="top3-domain">${esc(r.domain)}${h2tag}</div>
+      <div class="top3-meta">${esc(TOPO_LBL[r.topology]||'—')} · риск ${esc(RISK_LBL[r.tspu_risk]||'—')} · ${r.rtt_avg?r.rtt_avg.toFixed(0)+'ms':'—'}</div>
+      <div class="top3-score ${scc}">${sc}</div>
+    </div>`;
+  }).join('');
+}
+
+function setPerPage(v){perPage=parseInt(v);currentPage=1;renderTable();}
+function goPage(d){const tp=Math.ceil(filteredResults.length/perPage);currentPage=Math.max(1,Math.min(tp,currentPage+d));renderTable();}
+function jumpPage(n){currentPage=n;renderTable();}
+function pageRange(cur,total){
+  if(total<=7)return Array.from({length:total},(_,i)=>i+1);
+  if(cur<=4)return[1,2,3,4,5,'…',total];
+  if(cur>=total-3)return[1,'…',total-4,total-3,total-2,total-1,total];
+  return[1,'…',cur-1,cur,cur+1,'…',total];
+}
+
+function renderTable(){
+  if(!allResults.length)return;
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('tableWrap').style.display='block';
+  const good=allResults.filter(r=>r.suitable).length;
+  document.getElementById('resultBadge').textContent=
+    currentFilter==='all'?`${good}/${allResults.length} suitable`:`${filteredResults.length} shown`;
+  document.getElementById('statTotal').textContent=allResults.length;
+  document.getElementById('statGood').textContent=allResults.filter(r=>r.suitable).length;
+  document.getElementById('statIdeal').textContent=allResults.filter(r=>r.status==='ideal').length;
+  const tp=Math.ceil(filteredResults.length/perPage);
+  const s=(currentPage-1)*perPage,e=Math.min(s+perPage,filteredResults.length);
+  const body=document.getElementById('resultsBody');body.innerHTML='';
+  filteredResults.slice(s,e).forEach((r,i)=>{
+    const sc=r.score;
+    const scc=r.status==='ideal'?'var(--cyan)':sc>=70?'var(--green)':sc>=50?'var(--amber)':'var(--dim)';
+    const tls=(r.tls_version||'').replace('TLSv','')||'—';
+    const tlsC=r.tls_version==='TLSv1.3'?'tls-13':r.tls_version==='TLSv1.2'?'tls-12':'';
+    const kex=r.key_exchange||'—',kexC=kex.includes('X25519')?'kex-x':'kex-o';
+    const pq=r.mlkem?'<span class="pq" title="X25519MLKEM768">PQ</span>':'';
+    const rtt=r.rtt_avg?r.rtt_avg.toFixed(0)+'ms':'—';
+    const ip=r.resolved_ip?(esc(r.resolved_ip.slice(0,15))+(r.donor_asn?`<br><span style="color:var(--dim);font-size:10px">AS${esc(r.donor_asn)}${r.donor_cloudflare?' CF':''}</span>`:'')):'—';
+    const h2=r.h2_supported?'<span class="h2-yes" title="HTTP/2 ALPN">H2✓</span>':'<span class="h2-no">—</span>';
+    const topo=`<span class="topo-${esc(r.topology||'unknown')}">${esc(TOPO_LBL[r.topology]||'—')}</span>`;
+    const redir=r.redirect_offsite?`<span style="color:var(--red)" title="${esc(r.redirect_location)}">⚠</span>`
+      :r.http_redirect?`<span style="color:var(--orange)" title="${esc(r.redirect_location)}">↪</span>`:'<span class="cdn-no">—</span>';
+    const notes=esc((r.notes||[]).join('\n'));
+    const isIdeal=r.status==='ideal';
+    const isSkipped=r.status==='skipped'||r.status==='blocked';
+    const rowOpacity=isSkipped?'opacity:.45;':'';
+    const ub=useBtn(r);
+    const tr=document.createElement('tr');tr.style.cssText='animation-delay:'+(i*0.008)+'s;'+rowOpacity;
+    tr.innerHTML=`<td class="rank-td">${s+i+1}</td>
+      <td class="domain-td" title="${esc(r.domain)}">${esc(r.domain)}${r.overused?' <span style="color:var(--red)" title="затёртый SNI">●</span>':''}${r.ru_whitelisted?' <span style="color:var(--cyan)" title="белый список РФ">WL</span>':''}</td>
+      <td class="ip-td" title="${esc((r.all_ips||[]).join(', '))} ${esc(r.donor_holder)} ${esc(r.donor_prefix)}">${ip}</td>
+      <td class="${tlsC}">${tls}</td>
+      <td class="${kexC}" style="font-size:11px">${esc(kex.slice(0,14))}${pq}</td>
+      <td>${h2}</td><td>${topo}</td><td>${redir}</td><td>${rtt}</td>
+      <td class="score-td"><span class="score-num" style="color:${scc}">${sc}</span>
+        <div class="score-bar"><div class="score-bar-fill" style="width:${sc}%;background:${scc}"></div></div></td>
+      <td class="risk-${esc(r.tspu_risk)}" style="font-family:var(--mono);font-size:10px;font-weight:600;cursor:help" title="${notes}">${esc(RISK_LBL[r.tspu_risk]||'—')}</td>
+      <td><span class="badge badge-${esc(r.status)}" title="${esc(r.error)}">${badgeInfo(r)}</span></td>
+      <td>${ub}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById('paginationTop').style.display='flex';
+  const pb=document.getElementById('paginationBottom');pb.style.display=tp>1?'flex':'none';
+  if(tp>1){
+    document.getElementById('pageInfo').textContent=`${s+1}–${e} of ${filteredResults.length}`;
+    document.getElementById('pgPrev').disabled=currentPage<=1;
+    document.getElementById('pgNext').disabled=currentPage>=tp;
+    const pgN=document.getElementById('pgNumbers');pgN.innerHTML='';
+    pageRange(currentPage,tp).forEach(n=>{
+      if(n==='…'){const sp=document.createElement('span');sp.textContent='…';sp.style.cssText='padding:3px 6px;font-family:var(--mono);font-size:11px;color:var(--dim)';pgN.appendChild(sp);}
+      else{const b=document.createElement('button');b.textContent=n;b.className='pg-num'+(n===currentPage?' active':'');b.onclick=()=>jumpPage(n);pgN.appendChild(b);}
+    });
+  }
+}
+
+function badgeInfo(r){
+  const ic={ideal:'✦',excellent:'✦',good:'◆',poor:'◇',blocked:'⊘',skipped:'∅',rst:'⚡',timeout:'⏱',tampered:'⚠',redirect:'↪',error:'✕'};
+  const lb={ideal:'IDEAL H2',excellent:'Excellent',good:'Good',poor:'Poor',blocked:'Blocked',skipped:'Infra',rst:'RST',timeout:'Timeout',tampered:'Tampered',redirect:'⚠ Redirect',error:'Error'};
+  return`${ic[r.status]||'?'} ${esc(lb[r.status]||r.status)}`;
+}
+
+let _lastConfigData=null;
+async function genConfig(domain,port){
+  lastConfigDomain=domain;lastConfigPort=port||443;
+  const sip=document.getElementById('serverIpIn');
+  if(!sip.value.trim()&&serverIp())sip.value=serverIp();
+  const res=await fetch('/api/genconfig',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({domain,port:lastConfigPort,server_ip:sip.value.trim()||'<SERVER_IP>',
+      transport:document.getElementById('transportSel').value,fingerprint:document.getElementById('fpSel').value})});
+  const d=await res.json();
+  if(!res.ok){toast(d.error||'Error');return;}
+  _lastConfigData=d;applyConfigData(d);
+  document.getElementById('configSection').style.display='block';
+  toast(`⚙️ ${domain} · ${d.transport} · fp=${d.fingerprint}`);
+}
+
+function applyConfigData(d){
+  document.getElementById('configDomainLabel').textContent=d.domain;
+  document.getElementById('configDpiTag').innerHTML=
+    `<span class="platform-note dpi-badge dpi-good">${esc(d.transport)} · ${esc(d.fingerprint)}</span>`;
+  document.getElementById('xrayInCode').textContent=JSON.stringify(d.xray_inbound,null,2);
+  document.getElementById('xrayOutCode').textContent=JSON.stringify(d.xray_outbound,null,2);
+  document.getElementById('sbInCode').textContent=JSON.stringify(d.singbox_inbound,null,2);
+  document.getElementById('sbOutCode').textContent=JSON.stringify(d.singbox_outbound,null,2);
+  document.getElementById('mihomoCode').textContent=d.mihomo;
+  document.getElementById('nekorayCode').textContent=JSON.stringify(d.nekoray,null,2);
+  document.getElementById('uriCode').textContent=d.share_uri;
+  document.getElementById('panelNote').textContent=d.panel_note||'';
+  document.getElementById('keyGrid').innerHTML=[
+    ['Private Key', d.private_key],
+    ['Public Key',  d.public_key],
+    ['UUID',        d.uuid],
+    ['Short IDs',   (d.short_ids||[]).join(', ')],
+    ['SNI / target', `${d.domain}:${d.port}`],
+    ['Flow',        d.flow||'— (XHTTP)'],
+    ['XHTTP path',  d.xhttp_path||'—'],
+  ].map(([k,v])=>`<div class="key-item">
+    <span class="key-name">${esc(k)}</span>
+    <span class="key-value" title="${esc(v)}">${esc(v)}</span>
+    <button class="copy-btn" data-v="${esc(v)}" onclick="copyText(this.dataset.v,this)">Copy</button>
+  </div>`).join('');
+}
+
+async function regenConfig(){
+  if(!lastConfigDomain)return;
+  await genConfig(lastConfigDomain,lastConfigPort);
+  toast('🔑 Keys regenerated');
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-pill').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+async function quickSearch(){
+  if(quickProbing)return;
+  const input=document.getElementById('quickInput');
+  const raw=input.value.trim();
+  const domain=raw.toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'').replace(/:.*/,'');
+  const port=parseInt(document.getElementById('quickPort').value)||443;
+  if(!domain||!domain.includes('.')){toast('Enter domain (e.g. www.apple.com)');input.focus();return;}
+  quickProbing=true;
+  const btn=document.getElementById('quickBtn');btn.textContent='⟳ Probing...';btn.disabled=true;
+  const res=document.getElementById('quickResult');res.style.display='block';
+  res.innerHTML=`<span style="color:var(--amber)">⟳ TLS+ALPN+H2 probing: ${domain}:${port}...</span>`;
+  try{
+    const r1=await fetch('/api/probe',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({domains:domain,port,concurrency:1,server_ip:serverIp(),profile:profile()})});
+    if(!r1.ok)throw new Error('Start error');
+    let result=null;
+    for(let i=0;i<60;i++){
+      await new Promise(r=>setTimeout(r,600));
+      const st=await(await fetch('/api/status')).json();
+      if(!st.running&&st.progress>0){result=st.results[0];break;}
+    }
+    if(!result)throw new Error('Probe timeout');
+    const sc=result.score;
+    const scc=result.status==='ideal'?'var(--cyan)':sc>=70?'var(--green)':sc>=50?'var(--amber)':'var(--red)';
+    const h2tag=result.h2_supported
+      ?'<span style="color:var(--cyan);font-weight:700;font-size:13px">H2✓</span>'
+      :'<span style="color:var(--dim)">no-H2</span>';
+    const cdntag=result.is_cdn
+      ?`<span style="color:var(--blue);font-size:11px">CDN[${result.ip_count}IP]</span>`:''
+    res.innerHTML=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:2px 0">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--cream)">${esc(result.domain)}</div>
+        <div style="color:var(--dim);font-size:11px;margin-top:2px">${esc(result.resolved_ip||'—')} · :${port}${result.donor_asn?' · AS'+esc(result.donor_asn)+' '+esc(result.donor_holder):''}</div>
+      </div>
+      <span style="color:var(--green2);font-family:var(--mono);font-size:12px">${esc(result.tls_version||'—')}</span>
+      <span style="font-family:var(--mono);font-size:11px">${esc(result.key_exchange||'—')}${result.mlkem?' <span class="pq">PQ</span>':''}</span>
+      ${h2tag} ${cdntag}
+      <span class="topo-${esc(result.topology)}" style="font-family:var(--mono);font-size:11px">топология: ${esc(TOPO_LBL[result.topology]||'—')}</span>
+      <span class="badge badge-${esc(result.status)}" style="font-size:11px">${badgeInfo(result)}</span>
+      <span style="font-size:20px;font-weight:800;color:${scc};font-family:var(--display)">${sc}</span>
+      <span class="risk-${esc(result.tspu_risk)}" style="font-family:var(--mono);font-size:11px;font-weight:700">РИСК: ${esc(RISK_LBL[result.tspu_risk]||'—')}</span>
+      ${useBtn(result,'style="font-size:12px;padding:5px 14px"')}
+      ${result.error?`<span style="color:var(--dim);font-size:11px">${esc(result.error)}</span>`:''}
+    </div>
+    ${(result.notes||[]).length?`<div style="margin-top:8px;color:var(--cream2);font-size:11px;line-height:1.6">${result.notes.map(n=>'• '+esc(n)).join('<br>')}</div>`:''}`;
+  }catch(e){res.innerHTML=`<span style="color:var(--red);font-size:13px">✕ ${esc(e.message)}</span>`;}
+  quickProbing=false;btn.textContent='Probe →';btn.disabled=false;
+}
+
+async function freezeTest(){
+  const input=document.getElementById('quickInput');
+  const sni=input.value.trim().toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'').replace(/:.*/,'');
+  if(!sni||!sni.includes('.')){toast('Укажите домен донора (SNI)');input.focus();return;}
+  const btn=document.getElementById('freezeBtn');btn.disabled=true;btn.textContent='❄ ...';
+  const res=document.getElementById('quickResult');res.style.display='block';
+  const ip=serverIp();
+  res.innerHTML=`<span style="color:var(--amber)">❄ Качаю ${esc(sni)} через ${esc(ip||'IP донора')} — до 30 с...</span>`;
+  try{
+    const r=await fetch('/api/freeze',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sni,target_ip:ip,port:parseInt(document.getElementById('quickPort').value)||443,
+        path:document.getElementById('freezePath').value||'/'})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Error');
+    const col={frozen:'var(--red)',clean:'var(--green)',inconclusive:'var(--amber)',error:'var(--red)'}[d.verdict]||'var(--dim)';
+    res.innerHTML=`<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+      <b style="color:${col};font-size:14px">${esc(d.verdict.toUpperCase())}</b>
+      <span>${esc(d.target_ip)} ← SNI ${esc(d.sni)}</span>
+      <span>${(d.bytes_received/1024).toFixed(1)} КБ за ${esc(d.elapsed)} с</span>
+      ${d.stalled?`<span style="color:var(--amber)">стоп на ${(d.stall_at/1024).toFixed(1)} КБ</span>`:''}
+    </div><div style="margin-top:6px;color:var(--cream2);font-size:11px">${esc(d.note)}</div>`;
+  }catch(e){res.innerHTML=`<span style="color:var(--red);font-size:13px">✕ ${esc(e.message)}</span>`;}
+  btn.disabled=false;btn.textContent='❄ Тест заморозки';
+}
+
+function updateLog(lines){
+  if(!lines.length)return;
+  document.getElementById('logTerm').innerHTML=lines.map(l=>{
+    let cls='ll-dim';
+    if(l.startsWith('✦'))cls='ll-ideal';
+    else if(l.startsWith('✓')||l.includes('EXCELLENT'))cls='ll-ok';
+    else if(l.includes('⊘')||l.includes('RST')||l.includes('BLOCKED'))cls='ll-err';
+    else if(l.includes('⚠')||l.includes('TAMPERED'))cls='ll-warn';
+    else if(l.startsWith('──'))cls='ll-done';
+    return`<div class="ll ${cls}">${esc(l)}</div>`;
+  }).join('');
+  document.getElementById('logTerm').scrollTop=9999;
+}
+
+function copyEl(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id).textContent);
+  const o=btn.textContent;btn.textContent='✓ Copied';btn.classList.add('ok');
+  setTimeout(()=>{btn.textContent=o;btn.classList.remove('ok')},1800);
+}
+function copyText(text,btn){
+  navigator.clipboard.writeText(text);
+  const o=btn.textContent;btn.textContent='✓';btn.classList.add('ok');
+  setTimeout(()=>{btn.textContent=o;btn.classList.remove('ok')},1800);
+}
+function exportData(fmt){
+  if(!allResults.length){toast('No results to export');return;}
+  window.open('/api/export/'+fmt,'_blank');
+  toast('📥 Downloading '+fmt.toUpperCase()+'...');
+}
+function toast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+</script>
+</body>
+</html>

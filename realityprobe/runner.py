@@ -135,7 +135,15 @@ async def _probe_all(prober: TLSProber, domains: List[str], concurrency: int, t0
         probe_state["elapsed"] = round(time.perf_counter() - t0, 1)
         _log_result(r)
 
-    await asyncio.gather(*(one(d) for d in domains))
+    tasks = [asyncio.ensure_future(one(d)) for d in domains]
+    pending = set(tasks)
+    while pending:
+        _, pending = await asyncio.wait(pending, timeout=0.3)
+        if _stopped():
+            for t in pending:
+                t.cancel()
+            await asyncio.gather(*pending, return_exceptions=True)
+            break
     if _stopped():
         _log("⏹ Остановлено пользователем")
 

@@ -46,3 +46,26 @@ def test_run_subnet_local(cert_files):
     st = runner.probe_state
     assert [n["ip"] for n in st["neighbors"]] == ["127.0.0.1"]
     assert {r["domain"] for r in st["results"]} == {"test.local", "www.test.local"}
+
+
+def test_stop_cancels_quickly():
+    import asyncio
+    import time as _t
+
+    class SlowProber(LocalProber):
+        async def probe(self, domain):
+            await asyncio.sleep(20)
+
+    assert runner.try_start("scan")
+    import threading
+    t = threading.Thread(target=runner.run_scan,
+                         kwargs=dict(domains=[f"d{i}.example" for i in range(5)], port=443,
+                                     concurrency=2, asn=_asn(), prober_cls=SlowProber))
+    t0 = _t.perf_counter()
+    t.start()
+    _t.sleep(0.3)
+    runner.probe_state["stop_requested"] = True
+    t.join(5)
+    assert not t.is_alive() and _t.perf_counter() - t0 < 3
+    assert not runner.probe_state["running"]
+    assert any("Остановлено" in l for l in runner.probe_state["log"])

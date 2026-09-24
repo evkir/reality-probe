@@ -32,3 +32,13 @@ def test_candidate_domains_filters_tls12_and_dupes():
           Neighbor("1.1.1.2", "TLSv1.3", "h2", ["a.example", "b.example"]),
           Neighbor("1.1.1.3", "TLSv1.3", "", ["a.example"])]
     assert candidate_domains(ns) == ["a.example", "b.example"]
+
+
+def test_malicious_san_names_dropped(tmp_path):
+    from conftest import make_cert
+    _, cp, kp = make_cert(tmp_path, cn="ok.example",
+                          sans=("ok.example", "<img src=x onerror=alert(1)>.example", "facebook.com"))
+    with TLSServer(cp, kp, http_ok_handler) as srv:
+        found = asyncio.run(scan_subnet("127.0.0.3", port=srv.port, timeout=1.0,
+                                        network=ipaddress.ip_network("127.0.0.0/30")))
+    assert found[0].names == ["ok.example"]

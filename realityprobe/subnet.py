@@ -13,6 +13,7 @@ from dataclasses import dataclass, field, asdict
 from typing import Callable, List, Optional
 
 from .certs import concrete_names, parse_der
+from .filters import sanitize_domain
 from .policy import is_excluded
 
 MAX_HOSTS = 1024
@@ -55,7 +56,9 @@ async def _probe_host(ip: str, port: int, timeout: float) -> Optional[Neighbor]:
         der = sock.getpeercert(binary_form=True)
         if der:
             try:
-                n.names = [d for d in concrete_names(parse_der(der).names) if not is_excluded(d)]
+                # имена из чужих сертификатов — недоверенный ввод, пропускаем через валидатор
+                n.names = [d for d in concrete_names(parse_der(der).names)
+                           if sanitize_domain(d) == d and not is_excluded(d)]
             except Exception:
                 pass
         return n

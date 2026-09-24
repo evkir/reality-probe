@@ -13,11 +13,11 @@
 
 ---
 
-## What changed in DPI sytems and how v4 responds
+## What changed in DPI systems and how v4 responds
 
  the DPI system deployed on ISP networks.
 
-| TSPU behavior (2026) | What v4 does |
+| DPI behavior (2026) | What v4 does |
 |---|---|
 | TCP freezes after ~15–20 KB / ~25 packets to foreign IPs in datacenter ASNs (Hetzner, DO, Vultr, OVH…) | **Freeze test**: downloads the donor's page through the VPS IP and shows the byte at which the stream stalled. Warns if the server's ASN is in the risk group |
 | SNI is checked against the IP owner: an Apple/Microsoft/Google SNI on a hosting IP is an anomaly | **Topology**: donor ASN/prefix vs. the server's (RIPEstat). +25 for the same subnet, +20 for the same ASN, −15 for a big-brand SNI on a foreign ASN, −15 for a donor behind Cloudflare |
@@ -49,7 +49,7 @@ Open **http://localhost:7890**.
 1. Enter the **server (VPS) IP** → click **🧭 Subnet neighbors**. This is the main mode.
 2. If the /24 is empty — try /23 or /22, then a regular list scan with the same IP.
 3. Filter by **🧭 Subnet/ASN** or **🟢 Low risk** → **USE**.
-4. **From a Russian network**, enter the donor in Quick Probe and click **❄ Freeze test** (with the server IP filled in).
+4. **From a network**, enter the donor in Quick Probe and click **❄ Freeze test** (with the server IP filled in).
    `FROZEN` → change the IP/ASN, not the SNI. Control: the same test with the server IP empty (directly to the donor).
 5. Config: transport `TCP + Vision` (primary) and `XHTTP` (backup), fingerprint `firefox`.
 

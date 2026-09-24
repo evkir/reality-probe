@@ -1,8 +1,8 @@
 <h1 align="center">🐼 Reality Probe v4</h1>
 
 <p align="center">
-  <b>Подбор SNI/target для VLESS Reality под политики ТСПУ 2026</b><br/>
-  <sub>SNI↔IP/ASN · соседи по подсети VPS · X25519MLKEM768 · тест заморозки 15–20 КБ · Xray / sing-box / Mihomo</sub>
+  <b>SNI/target selection for VLESS Reality under Russia's TSPU DPI policies (2026)</b><br/>
+  <sub>SNI↔IP/ASN · neighbors in the VPS subnet · X25519MLKEM768 · 15–20 KB freeze test · Xray / sing-box / Mihomo</sub>
 </p>
 
 <p align="center">
@@ -13,94 +13,97 @@
 
 ---
 
-## Что изменилось в ТСПУ и как на это ответил v4
+## What changed in TSPU and how v4 responds
 
-| Поведение ТСПУ (2026) | Что делает v4 |
+TSPU is the DPI system deployed on Russian ISP networks.
+
+| TSPU behavior (2026) | What v4 does |
 |---|---|
-| Заморозка TCP после ~15–20 КБ / ~25 пакетов на зарубежные IP из DC-ASN (Hetzner, DO, Vultr, OVH…) | **Тест заморозки**: качает страницу донора через IP VPS и показывает, на каком байте встал поток. Предупреждает, если ASN сервера в группе риска |
-| Сверка SNI с владельцем IP: SNI Apple/Microsoft/Google на IP хостера = аномалия | **Топология**: ASN/префикс донора vs сервера (RIPEstat). +25 за ту же подсеть, +20 за тот же ASN, −15 за SNI крупного бренда на чужом ASN, −15 за донора за Cloudflare |
-| «Затёртые» SNI (microsoft.com, apple.com, lovelive-anime.jp…) — в первых строках эвристик | Штраф −15, убраны из встроенного списка |
-| Лучший донор — сайт рядом с сервером | **Соседи по подсети** (как RealiTLScanner): TLS без SNI ко всем хостам /24 (/23, /22), имена из сертификатов → полный пробинг |
-| Браузеры шлют X25519MLKEM768; target без него выдаёт себя при active probing | Сырой TLS 1.3 ClientHello: выбранная группа + поддержка MLKEM (колонка `KEX`, метка `PQ`) |
-| Fingerprint `chrome` под подозрением, частая смена fp → бан узла ~10 мин | По умолчанию `firefox`, порядок перебора в подсказке, без автосмены |
-| Режим белых списков (мобильные сети): TLS проходит только с SNI из списка | Профиль **«Белые списки РФ»**: встроенные кандидаты, штраф для остальных |
-| Vision не спасает от поведенческого анализа | Конфиг **XHTTP** (mode auto, padding 100–1000) как запасной inbound |
+| TCP freezes after ~15–20 KB / ~25 packets to foreign IPs in datacenter ASNs (Hetzner, DO, Vultr, OVH…) | **Freeze test**: downloads the donor's page through the VPS IP and shows the byte at which the stream stalled. Warns if the server's ASN is in the risk group |
+| SNI is checked against the IP owner: an Apple/Microsoft/Google SNI on a hosting IP is an anomaly | **Topology**: donor ASN/prefix vs. the server's (RIPEstat). +25 for the same subnet, +20 for the same ASN, −15 for a big-brand SNI on a foreign ASN, −15 for a donor behind Cloudflare |
+| "Burned" SNIs (microsoft.com, apple.com, lovelive-anime.jp…) are at the top of the heuristics | −15 penalty, removed from the built-in list |
+| The best donor is a site next to the server | **Subnet neighbors** (like RealiTLScanner): TLS without SNI to every host in the /24 (/23, /22), names from certificates → full probing |
+| Browsers send X25519MLKEM768; a target without it gives itself away under active probing | Raw TLS 1.3 ClientHello: selected group + MLKEM support (`KEX` column, `PQ` tag) |
+| The `chrome` fingerprint is under suspicion; frequent fp switching → node ban for ~10 min | `firefox` by default, fallback order in the hint, no auto-switching |
+| Whitelist mode (mobile networks): TLS passes only with an SNI from the list | **"RU whitelists"** profile: built-in candidates, penalty for everything else |
+| Vision does not protect against behavioral analysis | **XHTTP** config (mode auto, padding 100–1000) as a backup inbound |
 
-Без IP сервера максимум ~70 баллов (EXCELLENT): главный риск — несовпадение SNI↔IP — нельзя оценить, и инструмент это показывает.
+Without the server IP the maximum is ~70 points (EXCELLENT): the main risk — SNI↔IP mismatch — cannot be assessed, and the tool says so.
 
 ---
 
-## Быстрый старт
+## Quick start
 
 ```bash
 git clone https://github.com/evkir/reality-probe.git
 cd reality-probe
-pip install -r requirements.txt
-python reality_probe.py            # или: python -m realityprobe --port 7890 --no-browser
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python reality_probe.py   # or: .venv/bin/python -m realityprobe --port 7890 --no-browser
 ```
 
-Откройте **http://localhost:7890**.
+Open **http://localhost:7890**.
 
-### Рабочий порядок
+### Workflow
 
-1. Впишите **IP сервера (VPS)** → нажмите **🧭 Соседи по подсети**. Это главный режим.
-2. Если в /24 пусто — /23 или /22, затем обычный скан списка с тем же IP.
-3. Отфильтруйте **🧭 Подсеть/ASN** или **🟢 Низкий риск** → **USE**.
-4. **Из сети РФ** введите донора в Quick Probe и нажмите **❄ Тест заморозки** (IP сервера заполнен).
-   `FROZEN` → меняйте IP/ASN, а не SNI. Контроль: тот же тест с пустым IP сервера (напрямую к донору).
-5. Конфиг: транспорт `TCP + Vision` (основной) и `XHTTP` (запасной), fingerprint `firefox`.
+1. Enter the **server (VPS) IP** → click **🧭 Subnet neighbors**. This is the main mode.
+2. If the /24 is empty — try /23 or /22, then a regular list scan with the same IP.
+3. Filter by **🧭 Subnet/ASN** or **🟢 Low risk** → **USE**.
+4. **From a Russian network**, enter the donor in Quick Probe and click **❄ Freeze test** (with the server IP filled in).
+   `FROZEN` → change the IP/ASN, not the SNI. Control: the same test with the server IP empty (directly to the donor).
+5. Config: transport `TCP + Vision` (primary) and `XHTTP` (backup), fingerprint `firefox`.
 
 ---
 
-## Скоринг
+## Scoring
 
-| Фактор | Баллы |
+| Factor | Points |
 |---|---|
-| TLS 1.3 | +25 (без него — непригоден) |
-| h2 в ALPN | +15 |
+| TLS 1.3 | +25 (unsuitable without it) |
+| h2 in ALPN | +15 |
 | X25519MLKEM768 | +10 |
-| X25519/MLKEM выбран | +5 |
-| Сертификат покрывает SNI | +5 / −10 |
-| HTTP 2xx на `/` | +5; офсайт-редирект −25 (непригоден) |
-| RTT | до +5 |
-| **Донор в подсети VPS** | **+25** |
-| **Донор в ASN VPS** | **+20** |
-| SNI крупного бренда на чужом ASN | −15 |
-| Донор за Cloudflare (ASN неизвестен) | −15 |
-| Затёртый SNI | −15 |
-| Профиль «белые списки»: SNI в списке | +15 (иначе непригоден) |
+| X25519/MLKEM selected | +5 |
+| Certificate covers the SNI | +5 / −10 |
+| HTTP 2xx on `/` | +5; off-site redirect −25 (unsuitable) |
+| RTT | up to +5 |
+| **Donor in the VPS subnet** | **+25** |
+| **Donor in the VPS ASN** | **+20** |
+| Big-brand SNI on a foreign ASN | −15 |
+| Donor behind Cloudflare (ASN unknown) | −15 |
+| Burned SNI | −15 |
+| "Whitelists" profile: SNI on the list | +15 (otherwise unsuitable) |
 
-Статус: **IDEAL** ≥80 · **EXCELLENT** ≥65 · **GOOD** ≥50 · **POOR** <50.
-Риск ТСПУ: `НИЗКИЙ` / `СРЕДНИЙ` / `ВЫСОКИЙ` — наведите на значение, чтобы увидеть причины.
+Status: **IDEAL** ≥80 · **EXCELLENT** ≥65 · **GOOD** ≥50 · **POOR** <50.
+TSPU risk: `LOW` / `MEDIUM` / `HIGH` — hover over the value to see the reasons.
 
 ---
 
-## Конфиги
+## Configs
 
 Xray (server/client), sing-box, Mihomo, NekoBox/Throne, `vless://`:
 
-- `target` вместо устаревшего `dest`, `serverNames` = хост target;
-- без пустого shortId, `fingerprint` только на клиенте;
-- `mux` выключен (несовместим с Vision);
-- XHTTP: `flow` не используется; sing-box/Mihomo/NekoBox его не поддерживают — клиент на Xray-core (v2rayN, v2rayNG, Happ, Streisand).
+- `target` instead of the deprecated `dest`, `serverNames` = target host;
+- no empty shortId, `fingerprint` on the client only;
+- `mux` disabled (incompatible with Vision);
+- XHTTP: `flow` is not used; sing-box/Mihomo/NekoBox do not support it — use an Xray-core client (v2rayN, v2rayNG, Happ, Streisand).
 
 ---
 
-## Архитектура
+## Architecture
 
 ```
 realityprobe/
-  policy.py     модель политик ТСПУ: списки, ASN, диапазоны Cloudflare, белый список
-  netinfo.py    ASN/префикс через RIPEstat (кеш по префиксу, офлайн-режим)
-  tlshello.py   сырой ClientHello (X25519MLKEM768) и разбор ServerHello
-  certs.py      разбор DER-сертификата, RFC 6125, MITM-издатели
-  prober.py     DNS → TLS/ALPN/серт → KEX → HTTP-статус → ASN → скоринг
-  scoring.py    чистая функция оценки и риска
-  subnet.py     соседи по подсети VPS
-  freeze.py     тест заморозки 15–20 КБ
+  policy.py     TSPU policy model: lists, ASNs, Cloudflare ranges, whitelist
+  netinfo.py    ASN/prefix via RIPEstat (prefix cache, offline mode)
+  tlshello.py   raw ClientHello (X25519MLKEM768) and ServerHello parsing
+  certs.py      DER certificate parsing, RFC 6125, MITM issuers
+  prober.py     DNS → TLS/ALPN/cert → KEX → HTTP status → ASN → scoring
+  scoring.py    pure scoring and risk function
+  subnet.py     neighbors in the VPS subnet
+  freeze.py     15–20 KB freeze test
   configgen.py  Xray / sing-box / Mihomo / NekoBox / vless://
-  runner.py     фоновые сканы, история
-  app.py        Flask API, web/index.html — UI
+  runner.py     background scans, history
+  app.py        Flask API; web/index.html — UI
 ```
 
 API: `POST /api/probe`, `POST /api/subnet`, `POST /api/freeze`, `POST /api/genconfig`,
@@ -115,27 +118,27 @@ docker build -t reality-probe .
 docker run -p 127.0.0.1:7890:7890 reality-probe
 ```
 
-API без авторизации — не публикуйте порт наружу.
+The API has no authentication — do not expose the port publicly.
 
-## Тесты
+## Tests
 
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt
-python -m pytest -q
+.venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+.venv/bin/python -m pytest -q
 ```
 
-Тесты не ходят в интернет: локальный TLS 1.3 сервер с самоподписанным сертификатом, фейковый RIPEstat.
+Tests do not access the internet: a local TLS 1.3 server with a self-signed certificate and a fake RIPEstat.
 
 ---
 
-## Ограничения
+## Limitations
 
-- Модель ТСПУ — реконструкция по публичным наблюдениям (май–июнь 2026), не официальные данные; эвристики меняются.
-- Тест заморозки осмыслен только из сети РФ; из-за рубежа он покажет `CLEAN`.
-- Белый список РФ неофициальный и отличается по регионам.
-- Сканирование подсети — только IPv4.
+- The TSPU model is a reconstruction from public observations (May–June 2026), not official data; the heuristics change.
+- The freeze test is only meaningful from a Russian network; from abroad it will show `CLEAN`.
+- The Russian whitelist is unofficial and varies by region.
+- Subnet scanning is IPv4 only.
 
-## Связанные проекты
+## Related projects
 
 - [XTLS/Xray-core](https://github.com/XTLS/Xray-core) · [XTLS/RealiTLScanner](https://github.com/XTLS/RealiTLScanner) · [SagerNet/sing-box](https://github.com/SagerNet/sing-box)
 

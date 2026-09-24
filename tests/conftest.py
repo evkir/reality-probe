@@ -67,6 +67,13 @@ class TLSServer:
         return self
 
     def __exit__(self, *exc):
+        async def shutdown():
+            self.server.close()
+            tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+            for t in tasks:
+                t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+        asyncio.run_coroutine_threadsafe(shutdown(), self.loop).result(3)
         self.loop.call_soon_threadsafe(self.loop.stop)
         self._thread.join(2)
 

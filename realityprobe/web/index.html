@@ -67,8 +67,8 @@ header{display:flex;align-items:center;padding:22px 0 20px;border-bottom:1px sol
 .card-title{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--green2);letter-spacing:2px;text-transform:uppercase}
 .card-body{padding:18px}
 .field-lbl{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:7px}
-textarea,input[type=number]{width:100%;background:var(--ink3);border:1px solid rgba(110,231,122,.12);border-radius:var(--radius-sm);color:var(--cream);font-family:var(--mono);font-size:12px;font-weight:300;padding:10px 13px;outline:none;resize:vertical;transition:border-color .2s,box-shadow .2s;line-height:1.7}
-textarea:focus,input[type=number]:focus{border-color:rgba(110,231,122,.45);box-shadow:0 0 0 3px rgba(110,231,122,.07)}
+textarea,input[type=number],#serverIpScan,#freezePath{width:100%;background:var(--ink3);border:1px solid rgba(110,231,122,.12);border-radius:var(--radius-sm);color:var(--cream);font-family:var(--mono);font-size:12px;font-weight:300;padding:10px 13px;outline:none;resize:vertical;transition:border-color .2s,box-shadow .2s;line-height:1.7}
+textarea:focus,input[type=number]:focus,#serverIpScan:focus,#freezePath:focus{border-color:rgba(110,231,122,.45);box-shadow:0 0 0 3px rgba(110,231,122,.07)}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 input[type=range]{-webkit-appearance:none;width:100%;height:5px;background:var(--ink4);border-radius:3px;border:none;padding:0;cursor:pointer;outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(110,231,122,.5);cursor:pointer;transition:transform .15s}
@@ -279,7 +279,7 @@ td{padding:9px 11px;vertical-align:middle;font-family:var(--mono);font-size:12px
   </div>
   <div class="hstats">
     <div class="hstat"><div class="hstat-val" id="statTotal">—</div><div class="hstat-lbl">scanned</div></div>
-    <div class="hstat"><div class="hstat-val cyan" id="statIdeal">—</div><div class="hstat-lbl">ideal H2</div></div>
+    <div class="hstat"><div class="hstat-val cyan" id="statIdeal">—</div><div class="hstat-lbl">ideal</div></div>
     <div class="hstat"><div class="hstat-val" id="statGood">—</div><div class="hstat-lbl">suitable</div></div>
     <div class="hstat"><div class="hstat-val amber" id="statTime">—</div><div class="hstat-lbl">seconds</div></div>
   </div>
@@ -415,7 +415,7 @@ td{padding:9px 11px;vertical-align:middle;font-family:var(--mono);font-size:12px
       </div>
       <div style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--dim)">
         Тест заморозки идёт на IP из поля «IP сервера» (пусто — на IP донора, как контроль). Путь:
-        <input type="text" id="freezePath" value="/" style="width:160px;height:24px;padding:0 6px;margin-left:4px;font-size:11px">
+        <input type="text" id="freezePath" value="/" style="width:180px;padding:3px 8px;margin-left:4px;display:inline-block;resize:none">
       </div>
       <div id="quickResult" style="display:none;margin-top:12px;padding:12px 15px;
            background:var(--ink);border:1px solid var(--border);border-radius:var(--radius-sm);

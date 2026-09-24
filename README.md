@@ -1,7 +1,7 @@
 <h1 align="center">🐼 Reality Probe v4</h1>
 
 <p align="center">
-  <b>SNI/target selection for VLESS Reality under Russia's TSPU DPI policies (2026)</b><br/>
+  <b>SNI/target selection for VLESS Reality under DPI policies (2026)</b><br/>
   <sub>SNI↔IP/ASN · neighbors in the VPS subnet · X25519MLKEM768 · 15–20 KB freeze test · Xray / sing-box / Mihomo</sub>
 </p>
 
@@ -13,9 +13,9 @@
 
 ---
 
-## What changed in TSPU and how v4 responds
+## What changed in DPI sytems and how v4 responds
 
-TSPU is the DPI system deployed on Russian ISP networks.
+ the DPI system deployed on ISP networks.
 
 | TSPU behavior (2026) | What v4 does |
 |---|---|
@@ -133,9 +133,9 @@ Tests do not access the internet: a local TLS 1.3 server with a self-signed cert
 
 ## Limitations
 
-- The TSPU model is a reconstruction from public observations (May–June 2026), not official data; the heuristics change.
-- The freeze test is only meaningful from a Russian network; from abroad it will show `CLEAN`.
-- The Russian whitelist is unofficial and varies by region.
+- The DPI model is a reconstruction from public observations (May–June 2026), not official data; the heuristics change.
+- The freeze test is only meaningful from a network; from abroad it will show `CLEAN`.
+- The whitelist is unofficial and varies by region.
 - Subnet scanning is IPv4 only.
 
 ## Related projects
